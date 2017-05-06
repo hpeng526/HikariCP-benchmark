@@ -24,6 +24,7 @@ import java.util.concurrent.Executors;
 
 import javax.sql.DataSource;
 
+import com.alibaba.druid.pool.DruidDataSource;
 import org.apache.commons.dbcp2.BasicDataSource;
 import org.apache.tomcat.jdbc.pool.PoolProperties;
 import org.apache.tomcat.jdbc.pool.PooledConnection;
@@ -48,7 +49,7 @@ public class BenchBase
 {
     protected static final int MIN_POOL_SIZE = 0;
 
-    @Param({ "hikari", "dbcp2", "tomcat", "c3p0", "vibur" })
+    @Param({ "hikari", "dbcp2", "tomcat", "c3p0", "vibur", "druid" })
     public String pool;
 
     @Param({ "32" })
@@ -100,6 +101,9 @@ public class BenchBase
         case "one":
             setupOne();
             break;
+        case "druid":
+            setupDruid();
+            break;
         }
     }
 
@@ -126,7 +130,25 @@ public class BenchBase
         case "vibur":
             ((ViburDBCPDataSource) DS).terminate();
             break;
+        case "druid":
+            ((DruidDataSource) DS).close();
+            break;
         }
+    }
+
+    protected void setupDruid() {
+        DruidDataSource ds = new DruidDataSource();
+        ds.setUrl(jdbcUrl);
+        ds.setUsername("brettw");
+        ds.setDriverClassName("com.zaxxer.hikari.benchmark.stubs.StubDriver");
+        ds.setPassword("");
+        ds.setInitialSize(MIN_POOL_SIZE);
+        ds.setMinIdle(MIN_POOL_SIZE);
+        ds.setMaxActive(maxPoolSize);
+        ds.setValidationQuery("SELECT 1");
+        ds.setDefaultAutoCommit(false);
+        DS = ds;
+
     }
 
     protected void setupTomcat()

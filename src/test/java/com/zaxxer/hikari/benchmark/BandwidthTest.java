@@ -13,6 +13,7 @@ import java.util.concurrent.Executors;
 
 import javax.sql.DataSource;
 
+import com.alibaba.druid.pool.DruidDataSource;
 import org.apache.commons.dbcp2.BasicDataSource;
 import org.apache.commons.dbcp2.DbcpPoolAccessor;
 import org.apache.commons.dbcp2.TomcatPoolAccessor;
@@ -68,6 +69,9 @@ public class BandwidthTest
       case "vibur":
          setupVibur();
          break;
+         case "druid":
+            setupDruid();
+            break;
       default:
          throw new IllegalArgumentException("Unknown connection pool specified");
       }
@@ -138,6 +142,20 @@ public class BandwidthTest
       else if (ds instanceof ComboPooledDataSource) {
          ((ComboPooledDataSource) ds).close();
       }
+   }
+
+   private void setupDruid() {
+      DruidDataSource ds = new DruidDataSource();
+      ds.setUrl(jdbcUrl);
+      ds.setUsername("brettw");
+      ds.setPassword("");
+      ds.setInitialSize(MIN_POOL_SIZE);
+      ds.setMinIdle(MIN_POOL_SIZE);
+      ds.setMaxActive(MAX_POOL_SIZE);
+      ds.setValidationQuery("SELECT 1");
+      ds.setDefaultAutoCommit(false);
+      DS = ds;
+
    }
 
    private void setupDbcp2()

@@ -30,6 +30,8 @@ import java.util.stream.IntStream;
 
 import javax.sql.DataSource;
 
+import com.alibaba.druid.pool.DruidDataSource;
+import com.alibaba.druid.pool.DruidDataSourceStatValue;
 import org.apache.commons.dbcp2.BasicDataSource;
 import org.apache.commons.dbcp2.DbcpPoolAccessor;
 import org.apache.commons.dbcp2.TomcatPoolAccessor;
@@ -80,6 +82,8 @@ public class SpikeLoadTest
 
    private TomcatPoolAccessor tomcat;
 
+   private DruidDataSource druidDataSource;
+
    public static void main(String[] args) throws InterruptedException
    {
       SpikeLoadTest test = new SpikeLoadTest();
@@ -121,6 +125,10 @@ public class SpikeLoadTest
             break;
          case "vibur":
             setupVibur();
+            break;
+         case "druid":
+            setupDruid();
+            druidDataSource = (DruidDataSource) DS;
             break;
          default:
             throw new IllegalArgumentException("Unknown connection pool specified");
@@ -324,6 +332,13 @@ public class SpikeLoadTest
          stats.totalConnections = viburPool.getTotal();
          stats.pendingThreads = remaining;
          break;
+      case "druid":
+         DruidDataSourceStatValue poolState = druidDataSource.getStatValueAndReset();
+         stats.activeConnections = poolState.getActiveCount();
+         stats.idleConnections = poolState.getPoolingCount() - poolState.getActiveCount();
+         stats.totalConnections = poolState.getPoolingCount();
+         stats.pendingThreads = remaining;
+         break;
       }
 
       return stats;
@@ -463,6 +478,21 @@ public class SpikeLoadTest
       catch (Exception e) {
          throw new RuntimeException(e);
       }
+   }
+
+   private void setupDruid() {
+      DruidDataSource dataSource = new DruidDataSource();
+      dataSource.setUrl(jdbcUrl);
+      dataSource.setUsername("brettw");
+      dataSource.setPassword("");
+      dataSource.setMaxActive(MAX_POOL_SIZE);
+      dataSource.setInitialSize(MIN_POOL_SIZE);
+      dataSource.setMinIdle(MIN_POOL_SIZE);
+      dataSource.setQueryTimeout(8000);
+      dataSource.setDefaultAutoCommit(false);
+      dataSource.setValidationQuery("SELECT 1");
+
+      DS = dataSource;
    }
 
    private void setupVibur()

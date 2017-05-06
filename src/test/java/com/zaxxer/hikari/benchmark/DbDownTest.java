@@ -11,6 +11,7 @@ import java.util.concurrent.TimeUnit;
 
 import javax.sql.DataSource;
 
+import com.alibaba.druid.pool.DruidDataSource;
 import org.apache.commons.dbcp2.BasicDataSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,6 +36,7 @@ public class DbDownTest
     private DataSource c3p0DS;
     private DataSource dbcp2DS;
     private DataSource viburDS;
+    private DataSource druid;
 
     public static void main(String[] args)
     {
@@ -48,6 +50,7 @@ public class DbDownTest
         viburDS = setupVibur(); 
         c3p0DS = setupC3P0();
         dbcp2DS = setupDbcp2();
+        druid = setupDruid();
     }
 
     private void start()
@@ -93,6 +96,7 @@ public class DbDownTest
         new Timer(true).schedule(new MyTask(viburDS), 5000, 2000);
         new Timer(true).schedule(new MyTask(c3p0DS), 5000, 2000);
         new Timer(true).schedule(new MyTask(dbcp2DS), 5000, 2000);
+        new Timer(true).schedule(new MyTask(druid), 5000, 2000);
 
         try
         {
@@ -102,6 +106,21 @@ public class DbDownTest
         {
             return;
         }
+    }
+
+    protected DataSource setupDruid() {
+        DruidDataSource dataSource = new DruidDataSource();
+        dataSource.setUrl(JDBC_URL);
+        dataSource.setUsername("brettw");
+        dataSource.setPassword("");
+        dataSource.setMaxActive(maxPoolSize);
+        dataSource.setInitialSize(MIN_POOL_SIZE);
+        dataSource.setMinIdle(MIN_POOL_SIZE);
+        dataSource.setQueryTimeout(8000);
+        dataSource.setDefaultAutoCommit(false);
+        dataSource.setValidationQuery("SELECT 1");
+
+       return dataSource;
     }
 
     protected DataSource setupDbcp2()
